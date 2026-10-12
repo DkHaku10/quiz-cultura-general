@@ -120,6 +120,14 @@ const preguntas = [
 ];
 
 // =====================================================
+// 🔒 CONFIGURACIÓN DE ADMIN
+// =====================================================
+const CLAVE_ADMIN = "Dennis2026*";
+const USUARIO_ADMIN = "admin";
+const CLAVE_NOMBRE = "quizizz_nombre_jugador";
+const CLAVE_RANKING = "quizizz_ranking_avila_2026";
+
+// =====================================================
 // ESTADO
 // =====================================================
 let orden = [];
@@ -130,24 +138,6 @@ let respondida = false;
 let tiempoInicio = 0;
 let intervalo = null;
 let nombreJugador = "";
-
-// =====================================================
-// ELEMENTOS
-// =====================================================
-const inicioDiv = document.getElementById('inicio');
-const quizDiv = document.getElementById('quiz');
-const resultadoDiv = document.getElementById('resultado');
-const rankingDiv = document.getElementById('ranking');
-const preguntaTexto = document.getElementById('pregunta-texto');
-const respuestasDiv = document.getElementById('respuestas');
-const progreso = document.getElementById('progreso');
-const barra = document.getElementById('barra');
-const puntajeVivo = document.getElementById('puntaje-vivo');
-const cronometroEl = document.getElementById('cronometro');
-const nombreMostrar = document.getElementById('nombre-mostrar');
-const nombreInput = document.getElementById('nombre-jugador');
-
-document.getElementById('total-preguntas').textContent = preguntas.length;
 
 // =====================================================
 // MÚSICA (Web Audio API)
@@ -306,8 +296,21 @@ function animarConfeti() {
 }
 
 // =====================================================
-// NAVEGACIÓN
+// UTILIDADES
 // =====================================================
+function formatearTiempo(ms) {
+  const total = Math.floor(ms / 1000);
+  const min = String(Math.floor(total / 60)).padStart(2, '0');
+  const seg = String(total % 60).padStart(2, '0');
+  return `${min}:${seg}`;
+}
+
+function fechaLegible() {
+  const d = new Date();
+  return d.toLocaleDateString('es-PE') + ' ' +
+         d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+}
+
 function mostrarPantalla(pantalla) {
   document.querySelectorAll('.pantalla, .pantalla-quiz').forEach(p => {
     p.classList.remove('activa');
@@ -318,20 +321,26 @@ function mostrarPantalla(pantalla) {
 }
 
 // =====================================================
-// CRONÓMETRO
+// 🔐 NOMBRE PERSISTENTE
 // =====================================================
-function formatearTiempo(ms) {
-  const total = Math.floor(ms / 1000);
-  const min = String(Math.floor(total / 60)).padStart(2, '0');
-  const seg = String(total % 60).padStart(2, '0');
-  return `${min}:${seg}`;
+function obtenerNombreGuardado() {
+  return localStorage.getItem(CLAVE_NOMBRE) || "";
 }
 
+function guardarNombre(nombre) {
+  localStorage.setItem(CLAVE_NOMBRE, nombre);
+}
+
+// =====================================================
+// CRONÓMETRO
+// =====================================================
 function iniciarCronometro() {
   tiempoInicio = Date.now();
-  cronometroEl.textContent = '00:00';
+  const cronometroEl = document.getElementById('cronometro');
+  if (cronometroEl) cronometroEl.textContent = '00:00';
   intervalo = setInterval(() => {
-    cronometroEl.textContent = formatearTiempo(Date.now() - tiempoInicio);
+    const el = document.getElementById('cronometro');
+    if (el) el.textContent = formatearTiempo(Date.now() - tiempoInicio);
   }, 200);
 }
 
@@ -341,57 +350,17 @@ function detenerCronometro() {
 }
 
 // =====================================================
-// INICIAR
-// =====================================================
-document.getElementById('btn-iniciar').onclick = () => {
-  const nombre = nombreInput.value.trim();
-  if (!nombre) {
-    nombreInput.style.borderColor = '#e91e63';
-    nombreInput.placeholder = '⚠️ ¡Escribe tu nombre!';
-    return;
-  }
-  nombreJugador = nombre;
-  nombreMostrar.textContent = nombre;
-
-  // 🔀 MEZCLAR PREGUNTAS AL AZAR
-  orden = [...preguntas].sort(() => Math.random() - 0.5);
-
-  mostrarPantalla(quizDiv);
-  iniciarMusica();
-  iniciarCronometro();
-  cargarPregunta();
-};
-
-document.getElementById('btn-ranking').onclick = () => mostrarRanking();
-
-// =====================================================
-// 🎯 GENERAR OPCIONES COHERENTES
-// Usa los distractores temáticos (pregunta.d) en vez del banco global
+// 🎯 OPCIONES ALEATORIAS
 // =====================================================
 function generarOpcionesAleatorias(pregunta) {
   const correcta = pregunta.r[pregunta.c];
-
-  // Si la pregunta tiene distractores propios, usarlos.
-  // Si no, usar las opciones originales del array.
-  const pool = (pregunta.d && pregunta.d.length >= 3)
-    ? pregunta.d
-    : pregunta.r;
-
-  // Quitar duplicados y la correcta
+  const pool = (pregunta.d && pregunta.d.length >= 3) ? pregunta.d : pregunta.r;
   const candidatos = [...new Set(pool)].filter(op => op !== correcta);
-
-  // Mezclar y tomar 3 incorrectas
-  const incorrectas = candidatos
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
-
-  // Combinar con la correcta y mezclar posiciones
-  const opciones = [
+  const incorrectas = candidatos.sort(() => Math.random() - 0.5).slice(0, 3);
+  return [
     { texto: correcta, esCorrecta: true },
     ...incorrectas.map(t => ({ texto: t, esCorrecta: false }))
   ].sort(() => Math.random() - 0.5);
-
-  return opciones;
 }
 
 // =====================================================
@@ -400,10 +369,11 @@ function generarOpcionesAleatorias(pregunta) {
 function cargarPregunta() {
   respondida = false;
   const actual = orden[indice];
-  preguntaTexto.textContent = actual.p;
-  progreso.textContent = `Pregunta ${indice + 1} de ${orden.length}`;
-  barra.style.width = `${(indice / orden.length) * 100}%`;
+  document.getElementById('pregunta-texto').textContent = actual.p;
+  document.getElementById('progreso').textContent = `Pregunta ${indice + 1} de ${orden.length}`;
+  document.getElementById('barra').style.width = `${(indice / orden.length) * 100}%`;
 
+  const respuestasDiv = document.getElementById('respuestas');
   respuestasDiv.innerHTML = '';
 
   const opciones = generarOpcionesAleatorias(actual);
@@ -433,9 +403,10 @@ function seleccionar(esCorrecta, boton) {
   if (esCorrecta) {
     boton.classList.add('correcta');
     aciertos++;
-    puntajeVivo.textContent = aciertos;
-    puntajeVivo.classList.add('sube');
-    setTimeout(() => puntajeVivo.classList.remove('sube'), 500);
+    const pv = document.getElementById('puntaje-vivo');
+    pv.textContent = aciertos;
+    pv.classList.add('sube');
+    setTimeout(() => pv.classList.remove('sube'), 500);
     sonidoAcierto();
     lanzarConfeti();
   } else {
@@ -473,7 +444,7 @@ function seleccionar(esCorrecta, boton) {
 function terminarQuiz() {
   const tiempoTotal = detenerCronometro();
   detenerMusica();
-  barra.style.width = '100%';
+  document.getElementById('barra').style.width = '100%';
 
   const precision = Math.round((aciertos / orden.length) * 100);
 
@@ -497,7 +468,7 @@ function terminarQuiz() {
   if (btnCert) btnCert.classList.remove('oculto');
 
   guardarEnRanking(nombreJugador, aciertos, tiempoTotal);
-  mostrarPantalla(resultadoDiv);
+  mostrarPantalla(document.getElementById('resultado'));
 
   sonidoVictoria();
   iniciarLluviaConfeti();
@@ -546,7 +517,7 @@ function personalizarVictoria(precision) {
 }
 
 // =====================================================
-// 🎊 LLUVIA CONTINUA DE CONFETI
+// 🎊 LLUVIA DE CONFETI
 // =====================================================
 function iniciarLluviaConfeti() {
   let duracion = 0;
@@ -555,7 +526,6 @@ function iniciarLluviaConfeti() {
     duracion += 400;
     if (duracion >= 5000) clearInterval(interval);
   }, 400);
-
   lanzarConfeti();
   setTimeout(() => lanzarConfeti(), 150);
   setTimeout(() => lanzarConfeti(), 300);
@@ -580,28 +550,8 @@ function generarDestellos() {
 }
 
 // =====================================================
-// 📜 BOTÓN CERTIFICADO
-// =====================================================
-document.addEventListener('DOMContentLoaded', () => {
-  const btnCert = document.getElementById('btn-certificado');
-  const certificado = document.getElementById('certificado');
-  if (btnCert && certificado) {
-    btnCert.onclick = () => {
-      certificado.classList.toggle('oculto');
-      if (!certificado.classList.contains('oculto')) {
-        certificado.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        lanzarConfeti();
-        setTimeout(() => lanzarConfeti(), 300);
-      }
-    };
-  }
-});
-
-// =====================================================
 // RANKING
 // =====================================================
-const CLAVE_RANKING = 'quizizz_ranking_avila_2026';
-
 function obtenerRanking() {
   try {
     return JSON.parse(localStorage.getItem(CLAVE_RANKING)) || [];
@@ -610,17 +560,33 @@ function obtenerRanking() {
 
 function guardarEnRanking(nombre, aciertos, tiempo) {
   const ranking = obtenerRanking();
-  ranking.push({
-    nombre,
-    aciertos,
-    tiempo,
-    fecha: new Date().toLocaleDateString('es-PE')
-  });
+  const fecha = fechaLegible();
+
+  const idxExistente = ranking.findIndex(r =>
+    r.nombre.toLowerCase() === nombre.toLowerCase()
+  );
+
+  const nuevaEntrada = { nombre, aciertos, tiempo, fecha };
+
+  if (idxExistente !== -1) {
+    const anterior = ranking[idxExistente];
+    const mejora = (aciertos > anterior.aciertos) ||
+                   (aciertos === anterior.aciertos && tiempo < anterior.tiempo);
+    if (mejora) {
+      ranking[idxExistente] = nuevaEntrada;
+    } else {
+      ranking[idxExistente].fecha = fecha;
+    }
+  } else {
+    ranking.push(nuevaEntrada);
+  }
+
   ranking.sort((a, b) => {
     if (b.aciertos !== a.aciertos) return b.aciertos - a.aciertos;
     return a.tiempo - b.tiempo;
   });
-  localStorage.setItem(CLAVE_RANKING, JSON.stringify(ranking.slice(0, 20)));
+
+  localStorage.setItem(CLAVE_RANKING, JSON.stringify(ranking.slice(0, 50)));
 }
 
 function mostrarRanking() {
@@ -633,27 +599,20 @@ function mostrarRanking() {
     contenedor.innerHTML = ranking.map((r, i) => {
       const medalla = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
       const clase = i < 3 ? `top-${i + 1}` : '';
+      const esMismoJugador = (r.nombre.toLowerCase() === (obtenerNombreGuardado() || '').toLowerCase());
+      const bordeDorado = esMismoJugador ? 'style="box-shadow: 0 0 0 3px #ffd700; border-radius: 12px;"' : '';
       return `
-        <div class="fila-ranking ${clase}">
+        <div class="fila-ranking ${clase}" ${bordeDorado}>
           <div class="posicion">${medalla}</div>
-          <div class="nombre-rank">${r.nombre}</div>
+          <div class="nombre-rank">${r.nombre}${esMismoJugador ? ' 👈' : ''}</div>
           <div class="puntaje-rank">✅ ${r.aciertos}</div>
           <div class="tiempo-rank">⏱️ ${formatearTiempo(r.tiempo)}</div>
         </div>
       `;
     }).join('');
   }
-  mostrarPantalla(rankingDiv);
+  mostrarPantalla(document.getElementById('ranking'));
 }
-
-document.getElementById('btn-ver-ranking').onclick = () => mostrarRanking();
-
-document.getElementById('btn-limpiar').onclick = () => {
-  if (confirm('¿Seguro que quieres borrar todo el ranking?')) {
-    localStorage.removeItem(CLAVE_RANKING);
-    mostrarRanking();
-  }
-};
 
 // =====================================================
 // 📚 REPASO DE ERRORES
@@ -697,3 +656,141 @@ function renderizarRepaso() {
     seccion.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 }
+
+// =====================================================
+// 🚀 INICIALIZACIÓN (todo adentro de DOMContentLoaded)
+// =====================================================
+document.addEventListener('DOMContentLoaded', () => {
+
+  // --- Mostrar total de preguntas ---
+  const totalEl = document.getElementById('total-preguntas');
+  if (totalEl) totalEl.textContent = preguntas.length;
+
+  // --- Precargar nombre si ya existe ---
+  const nombreGuardado = obtenerNombreGuardado();
+  const inputNombre = document.getElementById('nombre-jugador');
+
+  if (nombreGuardado && inputNombre) {
+    inputNombre.value = nombreGuardado;
+    inputNombre.disabled = true;
+    inputNombre.style.background = '#f3e5f5';
+    inputNombre.style.cursor = 'not-allowed';
+    inputNombre.style.color = '#7b1fa2';
+    inputNombre.style.fontWeight = '700';
+    inputNombre.style.textAlign = 'center';
+    inputNombre.title = 'Ya estás registrado con este nombre';
+
+    const infoMsg = document.createElement('p');
+    infoMsg.style.cssText = 'text-align:center;color:#4a148c;font-weight:600;font-size:1rem;margin-bottom:10px;background:#f3e5f5;padding:12px;border-radius:12px;';
+    infoMsg.innerHTML = `👋 ¡Bienvenido de nuevo, <strong>${nombreGuardado}</strong>!`;
+    inputNombre.parentNode.insertBefore(infoMsg, inputNombre.nextSibling);
+  }
+
+  // --- Botón INICIAR ---
+  const btnIniciar = document.getElementById('btn-iniciar');
+  if (btnIniciar) {
+    btnIniciar.onclick = () => {
+      const guardado = obtenerNombreGuardado();
+      let nombre;
+
+      if (guardado) {
+        nombre = guardado;
+      } else {
+        nombre = inputNombre.value.trim();
+        if (!nombre) {
+          inputNombre.style.borderColor = '#e91e63';
+          inputNombre.placeholder = '⚠️ ¡Escribe tu nombre!';
+          return;
+        }
+        if (nombre.length < 3) {
+          inputNombre.style.borderColor = '#e91e63';
+          inputNombre.placeholder = '⚠️ Nombre muy corto (mínimo 3 letras)';
+          return;
+        }
+        guardarNombre(nombre);
+      }
+
+      nombreJugador = nombre;
+      document.getElementById('nombre-mostrar').textContent = nombre;
+
+      // Mezclar preguntas
+      orden = [...preguntas].sort(() => Math.random() - 0.5);
+
+      mostrarPantalla(document.getElementById('quiz'));
+      iniciarMusica();
+      iniciarCronometro();
+      cargarPregunta();
+    };
+  }
+
+  // --- Botón VER RANKING (inicio) ---
+  const btnRanking = document.getElementById('btn-ranking');
+  if (btnRanking) btnRanking.onclick = () => mostrarRanking();
+
+  // --- Botón VER RANKING (resultado) ---
+  const btnVerRanking = document.getElementById('btn-ver-ranking');
+  if (btnVerRanking) btnVerRanking.onclick = () => mostrarRanking();
+
+  // --- Botón LIMPIAR RANKING (solo admin) ---
+  const btnLimpiar = document.getElementById('btn-limpiar');
+  if (btnLimpiar) {
+    btnLimpiar.onclick = () => {
+      const usuario = prompt('🔒 Acceso restringido\n\nUsuario administrador:');
+      if (usuario === null) return;
+
+      const clave = prompt('🔒 Ingresa la contraseña de administrador:');
+      if (clave === null) return;
+
+      if (usuario.toLowerCase() !== USUARIO_ADMIN || clave !== CLAVE_ADMIN) {
+        sonidoError();
+        alert('❌ Acceso denegado.\n\nUsuario o contraseña incorrectos.');
+        return;
+      }
+
+      if (confirm('⚠️ ¿Estás seguro de borrar TODO el ranking?\n\nEsta acción no se puede deshacer.')) {
+        localStorage.removeItem(CLAVE_RANKING);
+        sonidoVictoria();
+        alert('🗑️ Ranking borrado correctamente.');
+        mostrarRanking();
+      }
+    };
+  }
+
+  // --- Botón RESET NOMBRE (solo admin) ---
+  const btnReset = document.getElementById('btn-reset-nombre');
+  if (btnReset) {
+    btnReset.onclick = () => {
+      const usuario = prompt('🔒 Usuario administrador:');
+      if (usuario === null) return;
+
+      const clave = prompt('🔒 Contraseña:');
+      if (clave === null) return;
+
+      if (usuario.toLowerCase() !== USUARIO_ADMIN || clave !== CLAVE_ADMIN) {
+        sonidoError();
+        alert('❌ Acceso denegado.');
+        return;
+      }
+
+      if (confirm('⚠️ Se borrará el nombre guardado en este dispositivo.\n\n¿Continuar?')) {
+        localStorage.removeItem(CLAVE_NOMBRE);
+        alert('✅ Nombre liberado. La próxima vez podrás ingresar otro.');
+        location.reload();
+      }
+    };
+  }
+
+  // --- Botón CERTIFICADO ---
+  const btnCert = document.getElementById('btn-certificado');
+  const certificado = document.getElementById('certificado');
+  if (btnCert && certificado) {
+    btnCert.onclick = () => {
+      certificado.classList.toggle('oculto');
+      if (!certificado.classList.contains('oculto')) {
+        certificado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        lanzarConfeti();
+        setTimeout(() => lanzarConfeti(), 300);
+      }
+    };
+  }
+});
