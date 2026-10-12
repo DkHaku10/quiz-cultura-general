@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quizizz - Cultura General Ávila 2026</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== PANTALLA INICIO ===== -->
+  <div id="inicio" class="pantalla activa">
+    <div class="logo-quizizz">
+      <span class="logo-q">Q</span>uizizz
+    </div>
+    <h1>🏆 Cultura General - Ávila 2026</h1>
+    <p class="subtitulo">I.E. Santa María del Rosario</p>
+    <div class="tarjeta-info">
+      <div class="dato">📚 <strong>57</strong> preguntas</div>
+      <div class="dato">⚡ Gana quien <strong>más aciertos</strong> logre</div>
+      <div class="dato">⏱️ En el <strong>menor tiempo</strong> posible</div>
+    </div>
+    <input type="text" id="nombre-jugador" placeholder="👉 Escribe tu nombre" maxlength="20">
+    <button id="btn-iniciar" class="btn-grande">🚀 ¡COMENZAR!</button>
+    <button id="btn-ranking" class="btn-secundario">🏅 Ver Ranking</button>
+  </div>
+
+  <!-- ===== PANTALLA QUIZ ===== -->
+  <div id="quiz" class="pantalla-quiz">
+    <!-- Header superior -->
+    <div class="header-quiz">
+      <div class="jugador-info">👤 <span id="nombre-mostrar">—</span></div>
+      <div class="progreso-central">
+        <span id="progreso">Pregunta 1 de 57</span>
+      </div>
+      <div class="cronometro">⏱️ <span id="cronometro">00:00</span></div>
+    </div>
+
+    <div class="barra-progreso">
+      <div id="barra" class="barra"></div>
+    </div>
+
+    <!-- Contenido principal: pregunta + contador lateral -->
+    <div class="contenido-principal">
+      <div class="zona-pregunta">
+        <h2 id="pregunta-texto">Cargando...</h2>
+        <div id="respuestas" class="respuestas"></div>
+      </div>
+
+      <!-- Panel lateral de aciertos -->
+      <aside class="panel-aciertos">
+        <div class="aciertos-icono">✅</div>
+        <div class="aciertos-numero" id="puntaje-vivo">0</div>
+        <div class="aciertos-label">ACIERTOS</div>
+        <div class="aciertos-separador"></div>
+        <div class="aciertos-total">de <span id="total-preguntas">57</span></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ===== PANTALLA RESULTADO (CEREMONIA DE PREMIACIÓN) ===== -->
+<div id="resultado" class="pantalla pantalla-victoria">
+  <!-- Rayos de luz de fondo -->
+  <div class="rayos-luz"></div>
+  <div class="destellos" id="destellos"></div>
+
+  <!-- Medalla y trofeo -->
+  <div class="zona-premio">
+    <div class="medalla" id="medalla">🥇</div>
+    <div class="trofeo-grande" id="trofeo-grande">🏆</div>
+    <div class="corona oculto" id="corona">👑</div>
+  </div>
+
+  <!-- Título épico -->
+  <h1 class="titulo-victoria" id="titulo-final">¡VICTORIA!</h1>
+  <p class="subtitulo-victoria" id="subtitulo-victoria">Tu esfuerzo ha sido recompensado</p>
+
+  <!-- Nombre del campeón -->
+  <div class="nombre-campeon">
+    <span class="copa-mini">🏅</span>
+    <span id="nombre-campeon">Jugador</span>
+    <span class="copa-mini">🏅</span>
+  </div>
+
+  <!-- Estadísticas tipo podio -->
+  <div class="estadisticas-victoria">
+    <div class="stat-victoria">
+      <div class="stat-icono">✅</div>
+      <span class="stat-valor" id="res-aciertos">0</span>
+      <span class="stat-label">Aciertos</span>
+    </div>
+    <div class="stat-victoria destacado">
+      <div class="stat-icono">⏱️</div>
+      <span class="stat-valor" id="res-tiempo">00:00</span>
+      <span class="stat-label">Tiempo</span>
+    </div>
+    <div class="stat-victoria">
+      <div class="stat-icono">🎯</div>
+      <span class="stat-valor" id="res-precision">0%</span>
+      <span class="stat-label">Precisión</span>
+    </div>
+  </div>
+
+  <!-- Frase épica -->
+  <p id="mensaje-final" class="mensaje-epico"></p>
+
+  <!-- Repaso de errores (como antes) -->
+  <div id="seccion-repaso" class="seccion-repaso oculto">
+    <h2>📚 Repaso de errores</h2>
+    <p class="repaso-info">Estas son las preguntas que fallaste. ¡Revísalas y vuelve a intentarlo!</p>
+    <div id="lista-errores" class="lista-errores"></div>
+  </div>
+
+  <div id="mensaje-perfecto" class="mensaje-perfecto oculto">
+    🎉 ¡No fallaste ninguna pregunta! Eres una máquina.
+  </div>
+
+  <!-- Botones -->
+  <div class="botones-final">
+    <button onclick="location.reload()" class="btn-grande">🔄 Volver a intentar</button>
+    <button id="btn-ver-ranking" class="btn-secundario">🏅 Ver Ranking</button>
+    <button id="btn-repaso" class="btn-secundario oculto">📚 Repasar errores</button>
+  </div>
+
+  <!-- Certificado de victoria (oculto hasta hacer clic) -->
+  <div class="certificado oculto" id="certificado">
+    <div class="certificado-borde">
+      <div class="certificado-contenido">
+        <div class="certificado-cinta">🏆</div>
+        <h2>CERTIFICADO DE VICTORIA</h2>
+        <p class="certificado-texto">Se otorga el presente reconocimiento a</p>
+        <p class="certificado-nombre" id="cert-nombre">Jugador</p>
+        <p class="certificado-texto">por haber completado el Quiz de Cultura General con</p>
+        <p class="certificado-stats" id="cert-stats">0 aciertos en 00:00</p>
+        <p class="certificado-fecha" id="cert-fecha"></p>
+        <div class="certificado-sello">I.E. Santa María del Rosario<br>Ávila 2026</div>
+      </div>
+    </div>
+  </div>
+  <button id="btn-certificado" class="btn-certificado oculto">📜 Ver mi certificado</button>
+</div>
+
+  <!-- ===== PANTALLA RANKING ===== -->
+  <div id="ranking" class="pantalla">
+    <h1>🏅 Ranking Histórico</h1>
+    <p class="subtitulo">Mejores tiempos con más aciertos</p>
+    <div id="tabla-ranking" class="tabla-ranking"></div>
+    <div class="botones-final">
+      <button onclick="location.reload()" class="btn-grande">🏠 Volver al Inicio</button>
+      <button id="btn-limpiar" class="btn-peligro">🗑️ Limpiar Ranking</button>
+    </div>
+  </div>
+
+  <!-- Canvas para confeti -->
+  <canvas id="confeti-canvas"></canvas>
+
+  <script src="script.js"></script>
+</body>
+</html>
